@@ -1,29 +1,41 @@
 name: Autograding Tests
 'on':
-- push
-- repository_dispatch
+  - push
+  - repository_dispatch
+
 permissions:
   checks: write
   actions: read
   contents: read
+
 jobs:
   run-autograding-tests:
     runs-on: ubuntu-latest
     if: github.actor != 'github-classroom[bot]'
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: hello world
-      id: hello-world
-      uses: classroom-resources/autograding-command-grader@v1
-      with:
-        test-name: hello world
-        setup-command: dotnet tool install -g dotnet-script
-        command: dotnet script helloworld.cs
-        timeout: 1
-    - name: Autograding Reporter
-      uses: classroom-resources/autograding-grading-reporter@v1
-      env:
-        HELLO-WORLD_RESULTS: "${{steps.hello-world.outputs.result}}"
-      with:
-        runners: hello-world
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'  # Adjust based on your needs
+
+      - name: Compile and Run Hello World
+        id: hello-world-test
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Hello world test
+          setup-command: ''
+          command: dotnet new console -n TempProject && mv helloworld.cs TempProject/Program.cs && cd TempProject && dotnet run
+          input: ''
+          expected-output: Hello, World!
+          comparison-method: exact
+          timeout: 1
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          HELLO-WORLD-TEST_RESULTS: "${{steps.hello-world-test.outputs.result}}"
+        with:
+          runners: hello-world-test
